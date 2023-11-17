@@ -1,0 +1,24 @@
+{
+  "orders": [
+    {
+      "address": null,
+      "deliveryType": "fbs",
+      "user": null,
+      "orderUid": "37969278_6afb0a86cc864f56850177bf7a3b4041",
+      "article": "wboo4sooz",
+      "rid": "48b36c84143740ce82e3ade908296653",
+      "createdAt": "2023-11-17T09:12:24Z",
+      "offices": [ "Симферополь" ],
+      "skus": [ "2038896226400" ],
+      "id": 1206514519,
+      "warehouseId": 844812,
+      "nmId": 186937421,
+      "chrtId": 306721508,
+      "price": 30600,
+      "convertedPrice": 30600,
+      "currencyCode": 643,
+      "convertedCurrencyCode": 643,
+      "cargoType": 1
+    }
+  ]
+}
