@@ -1,12 +1,6 @@
-﻿//using Telegram.Bot;
-
-//var botClient = new TelegramBotClient("6368222490:AAFoJCSEjozm8oZDa0Iu6C-zVSH2WR3szfE");
-
-
-//var me = await botClient.GetMeAsync();
-//Console.WriteLine($"Hello, I'm user {me.Id} amd my name is {me.FirstName}.");
-
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
+using System.Diagnostics.Metrics;
+using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -40,8 +34,6 @@ Console.ReadLine();
 cts.Cancel();
 
 
-
-
 async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
 {
     // Only process Message updates: https://core.telegram.org/bots/api#message
@@ -72,12 +64,12 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
                                         },
                                         new KeyboardButton[]
                                         {
-                                            new KeyboardButton("Стас")
+                                            new KeyboardButton("Стас D-класс")
                                         },
                                         new KeyboardButton[]
                                         {
                                             new KeyboardButton("Саня"),
-                                            new KeyboardButton("стата")
+                                            new KeyboardButton("СТАТА")
                                         }
             })
         {
@@ -86,10 +78,10 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
             // проверить можете сами
             ResizeKeyboard = true,
         };
-        string date = DateTime.Now.AddDays(1.0).ToString();
+        string date = DateTime.Now.AddDays(1.0).ToString("D");
         await botClient.SendTextMessageAsync(
            message.Chat.Id,
-           "Кто повезет парней завтра?",
+           $"Кто повезет парней завтра ({date})?",
            replyMarkup: replyKeyboard); 
 
         return;
@@ -103,9 +95,7 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
 
 
 
-
-
-        using (var connection = new SqliteConnection("Data Source=C:\\Users\\sanek\\Pictures\\DB.db"))
+        using (var connection = new SqliteConnection("Data Source=DB.db"))
         {
 
             string sqlExpression = $"SELECT COUNT(*) FROM statistic WHERE date = \"{date}\";";
@@ -134,7 +124,7 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
                 Message sendErrorMessage = await botClient.SendTextMessageAsync(
         chatId: chatId,
         text: $"Кто-то забронил, но мы его ебанули ради тебя дорогой",
-       
+
         disableNotification: true,
 
 
@@ -143,14 +133,14 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
                 command = new SqliteCommand();
                 command.Connection = connection;
                 command.CommandText = $"DELETE FROM statistic WHERE date = \"{date}\"";
-                
+
                 //await Console.Out.WriteLineAsync(str);
                 int number2 = command.ExecuteNonQuery();
 
 
 
 
-                
+
             }
 
 
@@ -176,128 +166,52 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
 
 
             return;
+        }
+    }
+    if (message.Text == "стата")
+    {
+        string mess = $"Cтатистика по трушным пацанам с 27.11:\n";
 
 
+        string sqlExpression = "SELECT name, COUNT(*) as counter FROM statistic GROUP BY name";
+        using (var connection = new SqliteConnection("Data Source=DB.db"))
+        {
+            connection.Open();
 
+            SqliteCommand command = new SqliteCommand(sqlExpression, connection);
+            using (SqliteDataReader reader = command.ExecuteReader())
+            {
+                if (reader.HasRows) // если есть данные
+                {
+                    Dictionary<string, string> valuePairs = new();
+                    while (reader.Read())   // построчно считываем данные
+                    {
+                        valuePairs.Add(reader.GetValue(0).ToString(), reader.GetValue(1).ToString());
+                        
 
+                    }
+                    foreach (var item in valuePairs)
+                    {
+                        mess += item.Key + "=" + item.Value+"\n";
+                        
+                    }
+                }
+            }
         }
 
-        //SQLiteConnection.CreateFile(baseName);
-
-        //SQLiteFactory factory = (SQLiteFactory)DbProviderFactories.GetFactory("System.Data.SQLite");
-        //using (SQLiteConnection connection = (SQLiteConnection)factory.CreateConnection())
-        //{
-        //    connection.ConnectionString = "Data Source = " + baseName;
-        //    connection.Open();
+        
 
 
-
-
-
-        //Console.WriteLine(
-        //$"{sendMessage.From.FirstName} sent message {sendMessage.MessageId} " +
-        //$"to chat {sendMessage.Chat.Id} at {sendMessage.Date}. " +
-        //$"It is a reply to message {sendMessage.ReplyToMessage.MessageId} " +
-        //$"and has {sendMessage.Entities.Length} message entities.");
-
+        await botClient.SendTextMessageAsync(
+           message.Chat.Id,
+           mess
+           );
 
 
     }
-
-    /*Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
-
-     // Echo received message text
-     Message sentMessage = await botClient.SendTextMessageAsync(
-         chatId: chatId,
-         text: "You said:\n" + messageText,
-         cancellationToken: cancellationToken);
-
-     Message stikerMessage = await botClient.SendStickerAsync(
-     chatId: chatId,
-     sticker: InputFile.FromUri("https://github.com/TelegramBots/book/raw/master/src/docs/sticker-dali.webp"),
-     cancellationToken: cancellationToken);
-
-     Message Testmessage = await botClient.SendTextMessageAsync(
-     chatId: chatId,
-     text: "Trying *all the parameters* of `sendMessage` method",
-     parseMode: ParseMode.MarkdownV2,
-     disableNotification: true,
-     replyToMessageId: update.Message.MessageId,
-     replyMarkup: new InlineKeyboardMarkup(
-         InlineKeyboardButton.WithUrl(
-             text: "Check sendMessage method",
-             url: "https://core.telegram.org/bots/api#sendmessage")),
-     cancellationToken: cancellationToken);
-
-     Console.WriteLine(
-     $"{Testmessage.From.FirstName} sent message {Testmessage.MessageId} " +
-     $"to chat {Testmessage.Chat.Id} at {Testmessage.Date}. " +
-     $"It is a reply to message {Testmessage.ReplyToMessage.MessageId} " +
-     $"and has {Testmessage.Entities.Length} message entities.");
-
-
-     ReplyKeyboardMarkup replyKeyboardMarkup = new(new[]
- {
-     new KeyboardButton[] { "Help me", "Call me ☎️" },
- })
-     {
-         ResizeKeyboard = true
-     };
-
-
-
-     Message sentMessage2 = await botClient.SendTextMessageAsync(
-     chatId: chatId,
-     text: "Choose a response",
-     //replyMarkup: replyKeyboardMarkup,
-     cancellationToken: cancellationToken);
-
-
-
-
-     if (message.Text == "/reply")
-     {
-         // Тут все аналогично Inline клавиатуре, только меняются классы
-         // НО! Тут потребуется дополнительно указать один параметр, чтобы
-         // клавиатура выглядела нормально, а не как абы что
-
-         var replyKeyboard = new ReplyKeyboardMarkup(
-             new List<KeyboardButton[]>()
-             {
-                                         new KeyboardButton[]
-                                         {
-                                             new KeyboardButton("Привет!"),
-                                             new KeyboardButton("Пока!"),
-                                         },
-                                         new KeyboardButton[]
-                                         {
-                                             new KeyboardButton("Позвони мне!")
-                                         },
-                                         new KeyboardButton[]
-                                         {
-                                             new KeyboardButton("Напиши моему соседу!")
-                                         }
-             })
-         {
-             // автоматическое изменение размера клавиатуры, если не стоит true,
-             // тогда клавиатура растягивается чуть ли не до луны,
-             // проверить можете сами
-             ResizeKeyboard = true,
-         };
-
-         await botClient.SendTextMessageAsync(
-            message.Chat.Id ,
-             "Это reply клавиатура!",
-             replyMarkup: replyKeyboard); // опять передаем клавиатуру в параметр replyMarkup
-
-         return;
-     }
-
- */
-
-
-
 }
+
+  
 
 
 
