@@ -1,20 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using System;
-using Telegram.Bot.Exceptions;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
 using Telegram.Bot.Types.ReplyMarkups;
-using Telegram.Bot.Types;
 
 namespace traning_Tbot
 {
-    public class UpdateHandler:IUpdateHandler
+    public class UpdateHandler : IUpdateHandler
     {
         private readonly ITelegramBotClient _botClient;
         private readonly ILogger<UpdateHandler> _logger;
