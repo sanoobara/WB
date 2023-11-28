@@ -118,12 +118,12 @@ class Program
                                 else
                                 {
                                     await botClient.SendTextMessageAsync(
-                                chat.Id,"EMPTY");
+                                chat.Id, "EMPTY");
                                 }
 
 
 
-                                
+
 
 
                             }
