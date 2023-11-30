@@ -1,4 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
+using System;
 using System.Diagnostics.Metrics;
 using System.Text.RegularExpressions;
 using Telegram.Bot;
@@ -8,6 +10,11 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
+
+/*var builder = new ConfigurationBuilder(). 
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile($"appsettings.{Environments.Development}.json", optional: true, reloadOnChange: true);
+*/
 var botClient = new TelegramBotClient("6368222490:AAFoJCSEjozm8oZDa0Iu6C-zVSH2WR3szfE");
 
 using CancellationTokenSource cts = new();
@@ -88,7 +95,7 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
     }
 
 
-    if (message.Text == "Семен" || message.Text == "Стас" || message.Text == "Саня" || message.Text == "Артем")
+    if (message.Text == "Семен" || message.Text == "Стас D-класс" || message.Text == "Саня" || message.Text == "Артем")
     {
         string name = message.Text;
         string date = DateTime.Now.AddDays(1.0).ToString("yyyy.MM.dd");
@@ -156,7 +163,7 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
             Message sendMessage = await botClient.SendTextMessageAsync(
             chatId: chatId,
             text: $"{date} повезет нормальных пацанов *{name}*",
-            parseMode: ParseMode.MarkdownV2,
+            /*parseMode: ParseMode.MarkdownV2,*/
             disableNotification: true,
             replyToMessageId: update.Message.MessageId,
 
@@ -168,7 +175,7 @@ async Task HandleUpdateAsync2(ITelegramBotClient botClient, Update update, Cance
             return;
         }
     }
-    if (message.Text == "стата")
+    if (message.Text == "СТАТА")
     {
         string mess = $"Cтатистика по трушным пацанам с 27.11:\n";
 
