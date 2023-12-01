@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace traning_Tbot
 {
-    internal class YaWhether
+    internal class YaWeather
     {
         const string token = "c6426c21-3c1d-4481-b867-89163e09a7ac";
         const string baseUrlResponce = "https://api.weather.yandex.ru/v2/informers?";
@@ -18,11 +18,10 @@ namespace traning_Tbot
         const string lang = "lang=ru_RU";
         public string urlReponse = baseUrlResponce + lat + "&" + lon + "&" + lang;
 
-        string resultMessageOUT;
 
 
 
-        public YaWhether()
+        public YaWeather()
         {
 
             //this.urlReponse = baseUrlResponce + lat + "&" + lon + "&" + lang;
@@ -32,18 +31,18 @@ namespace traning_Tbot
 
         }
 
-        public static async void GetWether()
+        public static async Task<string> GetWeather()
         {
             const string token = "c6426c21-3c1d-4481-b867-89163e09a7ac";
             const string baseUrlResponce = "https://api.weather.yandex.ru/v2/informers?";
             const string lat = "lat=44.75928";
             const string lon = "lon=34.46293";
             const string lang = "lang=ru_RU";
-         string urlReponse = baseUrlResponce + lat + "&" + lon + "&" + lang;
+            string urlReponse = baseUrlResponce + lat + "&" + lon + "&" + lang;
 
         
 
-        var resultMessage = $"Погода в запрошенном месте: )\n\n";
+            var resultMessage = $"Погода в Алуште:\n";
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Add("X-Yandex-API-Key", token);
@@ -72,7 +71,7 @@ namespace traning_Tbot
                 string season = (string)factObject["season"];
                 long obsTime = (long)factObject["obs_time"];
                 
-                await Console.Out.WriteLineAsync(resultMessage);
+               return resultMessage ;
             }
            
 

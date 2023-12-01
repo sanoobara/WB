@@ -75,7 +75,9 @@ namespace traning_Tbot
                                         },
                                         new KeyboardButton[]
                                         {
-                                            new KeyboardButton("Стас D-класс")
+                                            new KeyboardButton("Стас D-класс"),
+                                            new KeyboardButton("Погода")
+
                                         },
                                         new KeyboardButton[]
                                         {
@@ -133,19 +135,14 @@ namespace traning_Tbot
                     {
 
                         Message sendErrorMessage = await botClient.SendTextMessageAsync(
-                chatId: chatId,
-                text: $"Кто-то забронил, но мы его ебанули ради тебя дорогой",
-
-                disableNotification: true,
-
-
-                cancellationToken: cancellationToken);
+                        chatId: chatId,
+                        text: $"Кто-то забронил, но мы его ебанули ради тебя дорогой",
+                        disableNotification: true,
+                        cancellationToken: cancellationToken);
 
                         command = new SqliteCommand();
                         command.Connection = connection;
                         command.CommandText = $"DELETE FROM statistic WHERE date = \"{date}\"";
-
-                        //await Console.Out.WriteLineAsync(str);
                         int number2 = command.ExecuteNonQuery();
                     }
 
@@ -158,7 +155,7 @@ namespace traning_Tbot
                     int number = command.ExecuteNonQuery();
 
                     date = DateTime.Now.AddDays(1.0).ToString("dd MMMM");
-                    // await Console.Out.WriteLineAsync(date);
+                    
                     Message sendMessage = await botClient.SendTextMessageAsync(
                     chatId: chatId,
                     text: $"{date} повезет нормальных пацанов *{name}*",
@@ -172,46 +169,63 @@ namespace traning_Tbot
             }
             if (message.Text == "СТАТА")
             {
-                string mess = $"Cтатистика по трушным пацанам с 20.11:\n";
+                GetStat(message);
+            }
+            if (message.Text == "Погода")
+            {
+                GetWeather(message);
+            }
+        }
+
+        async void GetWeather(Message message)
+        {
+            var wheather = await YaWeather.GetWeather();
+            await botClient.SendTextMessageAsync(
+              message.Chat.Id,
+              wheather
+              );
+        }
 
 
-                string sqlExpression = "SELECT name, COUNT(*) as counter FROM statistic GROUP BY name ";
-                using (var connection = new SqliteConnection(SqliteConnectionString))
+        async void GetStat(Message message)
+        {
+            string mess = $"Cтатистика по трушным пацанам с 20.11:\n";
+
+
+            string sqlExpression = "SELECT name, COUNT(*) as counter FROM statistic GROUP BY name ";
+            using (var connection = new SqliteConnection(SqliteConnectionString))
+            {
+                connection.Open();
+
+                SqliteCommand command = new SqliteCommand(sqlExpression, connection);
+                using (SqliteDataReader reader = command.ExecuteReader())
                 {
-                    connection.Open();
-
-                    SqliteCommand command = new SqliteCommand(sqlExpression, connection);
-                    using (SqliteDataReader reader = command.ExecuteReader())
+                    if (reader.HasRows) // если есть данные
                     {
-                        if (reader.HasRows) // если есть данные
+                        Dictionary<string, string> valuePairs = new();
+                        while (reader.Read())   // построчно считываем данные
                         {
-                            Dictionary<string, string> valuePairs = new();
-                            while (reader.Read())   // построчно считываем данные
-                            {
-                                valuePairs.Add(reader.GetValue(0).ToString(), reader.GetValue(1).ToString());
+                            valuePairs.Add(reader.GetValue(0).ToString(), reader.GetValue(1).ToString());
 
 
-                            }
-                            foreach (var item in valuePairs)
-                            {
-                                mess += item.Key + "=" + item.Value + "\n";
+                        }
+                        foreach (var item in valuePairs)
+                        {
+                            mess += item.Key + "=" + item.Value + "\n";
 
-                            }
                         }
                     }
                 }
-
-
-
-
-                await botClient.SendTextMessageAsync(
-                   message.Chat.Id,
-                   mess
-                   );
-
-
             }
+
+            await botClient.SendTextMessageAsync(
+               message.Chat.Id,
+               mess
+               );
+
+
         }
+
 
 
         Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
