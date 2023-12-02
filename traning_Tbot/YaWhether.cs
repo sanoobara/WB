@@ -1,11 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json.Linq;
 
 namespace traning_Tbot
 {
@@ -27,7 +20,7 @@ namespace traning_Tbot
             //this.urlReponse = baseUrlResponce + lat + "&" + lon + "&" + lang;
 
             Console.WriteLine(urlReponse);
-           
+
 
         }
 
@@ -40,7 +33,7 @@ namespace traning_Tbot
             const string lang = "lang=ru_RU";
             string urlReponse = baseUrlResponce + lat + "&" + lon + "&" + lang;
 
-        
+
 
             var resultMessage = $"Погода в Алуште:\n";
             using (HttpClient client = new HttpClient())
@@ -70,10 +63,10 @@ namespace traning_Tbot
                 bool polar = (bool)factObject["polar"];
                 string season = (string)factObject["season"];
                 long obsTime = (long)factObject["obs_time"];
-                
-               return resultMessage ;
+
+                return resultMessage;
             }
-           
+
 
         }
 

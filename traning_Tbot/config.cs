@@ -8,7 +8,7 @@ namespace traning_Tbot
         public static IConfiguration Configuration { get; set; }
         public config()
         {
-            
+
 
             IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", false, true);
             Configuration = builder.Build();

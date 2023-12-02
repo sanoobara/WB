@@ -15,16 +15,18 @@ namespace traning_Tbot
 
         private string Token; //Токен бота
         private string SqliteConnectionString; // строка подключения к БД
+        CancellationTokenSource cts;
+
 
         public BotWorker(string Token, string pathDB, CancellationTokenSource cts)
         {
             this.Token = Token;
-            this.SqliteConnectionString = "Data Source ="+pathDB;
-
+            this.SqliteConnectionString = "Data Source =" + pathDB;
+            this.cts = cts;
 
             this.botClient = new TelegramBotClient(this.Token);
 
-            
+
 
             // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
             ReceiverOptions receiverOptions = new()
@@ -39,7 +41,7 @@ namespace traning_Tbot
                 cancellationToken: cts.Token
             );
             // Send cancellation request to stop bot
-            
+
 
 
 
@@ -82,7 +84,8 @@ namespace traning_Tbot
                                         new KeyboardButton[]
                                         {
                                             new KeyboardButton("Саня"),
-                                            new KeyboardButton("СТАТА")
+                                            new KeyboardButton("СТАТА"),
+                                            new KeyboardButton("test")
                                         }
                     })
                 {
@@ -155,7 +158,7 @@ namespace traning_Tbot
                     int number = command.ExecuteNonQuery();
 
                     date = DateTime.Now.AddDays(1.0).ToString("dd MMMM");
-                    
+
                     Message sendMessage = await botClient.SendTextMessageAsync(
                     chatId: chatId,
                     text: $"{date} повезет нормальных пацанов *{name}*",
@@ -175,10 +178,48 @@ namespace traning_Tbot
             {
                 GetWeather(message);
             }
+
+            if (message.Text == "test")
+            {
+                GetTestKeyboard(message);
+            }
+
+
+
         }
+
+
+
+        async void GetTestKeyboard(Message message)
+        {
+            InlineKeyboardMarkup inlineKeyboard = new(new[]
+        {
+            // first row
+            new []
+            {
+                InlineKeyboardButton.WithCallbackData(text: "1.1", callbackData: "11"),
+                InlineKeyboardButton.WithCallbackData(text: "1.2", callbackData: "12"),
+            },
+            // second row
+            new []
+            {
+                InlineKeyboardButton.WithCallbackData(text: "2.1", callbackData: "21"),
+                InlineKeyboardButton.WithCallbackData(text: "2.2", callbackData: "22"),
+            },
+            });
+
+            Message sentMessage = await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: "A message with an inline keyboard markup",
+                replyMarkup: inlineKeyboard,
+                cancellationToken: this.cts.Token);
+        }
+
+
 
         async void GetWeather(Message message)
         {
+
             var wheather = await YaWeather.GetWeather();
             await botClient.SendTextMessageAsync(
               message.Chat.Id,
