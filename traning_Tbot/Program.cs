@@ -1,31 +1,44 @@
-﻿using traning_Tbot;
+﻿using Telegram.Bot;
+using traning_Tbot;
 
 
 config config = new config();
 
 
 
-//Console.WriteLine(config.Configuration["Token"], config.Configuration["DataBase"]);
+Console.WriteLine(config.Configuration["Token"], config.Configuration["DataBase"]);
 
 
-//using CancellationTokenSource cts = new();
+using CancellationTokenSource cts = new();
 
-//var botWorker = new BotWorker(config.Configuration["Token"], config.Configuration["DataBase"], cts);
+var botWorker = new BotWorker(config.Configuration["Token"], config.Configuration["DataBase"], cts);
 
-//var me = await botWorker.botClient.GetMeAsync();
+var me = await botWorker.botClient.GetMeAsync();
+Console.WriteLine($"Start listening for @{me.Username}");
+Console.ReadLine();
+cts.Cancel();
 
-//Console.WriteLine($"Start listening for @{me.Username}");
-//Console.ReadLine();
-//cts.Cancel();
-
-
-
-Console.WriteLine(Guid.NewGuid().ToString("N"));
-
-
-//var s =  ExchangeRate.GetRate();
+//var s = ExchangeRate.GetRate();
 
 //Console.WriteLine(s.Result);
+
+async Task Timers()
+{
+
+    DateTime desiredTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, 19, 56, 0);
+    if (DateTime.Now > desiredTime)
+    {
+        await Console.Out.WriteLineAsync(desiredTime.ToString());
+        desiredTime = desiredTime.AddMinutes(1);
+        await Console.Out.WriteLineAsync(desiredTime.ToString());
+        Thread.Sleep(1000);
+    }
+}
+//while (true)
+//{
+//    Timers();
+//}
+
 
 
 

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using System.Diagnostics;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -24,14 +25,15 @@ namespace traning_Tbot
             this.SqliteConnectionString = "Data Source =" + pathDB;
             this.cts = cts;
 
-            this.botClient = new TelegramBotClient(this.Token);
+            botClient = new TelegramBotClient(this.Token);
 
 
 
             // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
             ReceiverOptions receiverOptions = new()
             {
-                AllowedUpdates = Array.Empty<UpdateType>() // receive all update types except ChatMember related updates
+                AllowedUpdates = Array.Empty<UpdateType>(), // receive all update types except ChatMember related updates
+                ThrowPendingUpdates = true // Херня которая говорит будет ли бот принимать сообщения пока он был офлайн
             };
 
             botClient.StartReceiving(
@@ -42,34 +44,104 @@ namespace traning_Tbot
             );
             // Send cancellation request to stop bot
 
-
-
-
         }
 
         async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
+
             // Only process Message updates: https://core.telegram.org/bots/api#message
-            if (update.Message is not { } message)
-                return;
-            // Only process text messages
-            if (message.Text is not { } messageText)
-                return;
-
-            //if (message.Sticker is not { } sticker)
-            //    return;
-
-            var chatId = message.Chat.Id;
-
-            if (message.Text == "/start")
+            switch (update.Type)
             {
-                // Тут все аналогично Inline клавиатуре, только меняются классы
-                // НО! Тут потребуется дополнительно указать один параметр, чтобы
-                // клавиатура выглядела нормально, а не как абы что
-
-                var replyKeyboard = new ReplyKeyboardMarkup(
-                    new List<KeyboardButton[]>()
+                case UpdateType.CallbackQuery:
                     {
+                        var message = update.CallbackQuery;
+                        
+                        var user = message.From;
+
+                        var sw = new Stopwatch();
+                        sw.Start();
+                        // Измеряемый код
+                        
+                        using (var connection = new SqliteConnection(SqliteConnectionString))
+                            {
+                                connection.Open();
+
+                                string sqlExpression = "INSERT INTO Main_stat (Name, NikName, IdUser, Date, CodeDrive, ChatId) VALUES (@Name, @NikName, @IdUser, @Date, @CodeDrive, @ChatId)";
+                                SqliteCommand command = new SqliteCommand(sqlExpression, connection);
+                                // создаем параметр для сообщения
+                                SqliteParameter NameParam = new SqliteParameter("@Name", user.FirstName);
+                                command.Parameters.Add(NameParam);
+                                SqliteParameter NikNameParam = new SqliteParameter("@NikName", user.Username);
+                                command.Parameters.Add(NikNameParam);
+                                SqliteParameter id_userParam = new SqliteParameter("@IdUser", message.From.Id);
+                                command.Parameters.Add(id_userParam);
+                                SqliteParameter dateParam = new SqliteParameter("@Date", message.Message.Date.ToString("g"));
+                                command.Parameters.Add(dateParam);
+                                SqliteParameter CodeDriveParam = new SqliteParameter("@CodeDrive", message.Data);
+                                command.Parameters.Add(CodeDriveParam);
+                                SqliteParameter ChatIdParam = new SqliteParameter("@ChatId", message.Message.Chat.Id);
+                                command.Parameters.Add(ChatIdParam);
+                            
+
+                            int number = await command.ExecuteNonQueryAsync();
+
+                            }
+                        Console.WriteLine("ЗАписано");
+                        sw.Stop();
+                        Console.WriteLine(sw.Elapsed);
+                        break;
+                    }
+                case UpdateType.Message:
+                    {
+                        var message = update.Message;
+                        var user = message.From;
+
+
+                        Console.WriteLine($"{user.FirstName} ({user.Id}) написал сообщение: {message.Text}");
+
+                        var chatId = message.Chat.Id;
+
+
+                        //Первое что сделаем это запишем в бд полученное сообщение
+                        await using (var connection = new SqliteConnection(SqliteConnectionString))
+                        {
+                            connection.Open();
+
+                            string sqlExpression = "INSERT INTO Stat_Message (Message, Date, Id_user, Nik_name) VALUES (@message, @date, @id_user, @nik_name)";
+                            SqliteCommand command = new SqliteCommand(sqlExpression, connection);
+                            // создаем параметр для сообщения
+                            SqliteParameter messageParam = new SqliteParameter("@message", message.Text);
+                            command.Parameters.Add(messageParam);
+                            // создаем параметр для возраста
+                            SqliteParameter dateParam = new SqliteParameter("@date", message.Date.ToString("g"));
+                            command.Parameters.Add(dateParam);
+                            SqliteParameter id_userParam = new SqliteParameter("@id_user", message.From.Id);
+                            command.Parameters.Add(id_userParam);
+                            SqliteParameter nik_nameParam = new SqliteParameter("@nik_name", message.From.Username);
+                            command.Parameters.Add(nik_nameParam);
+
+                            string sqlExpression2 = "INSERT OR IGNORE INTO Chat_Id (Id) VALUES (@Id)";
+                            SqliteCommand command2 = new SqliteCommand(sqlExpression2, connection);
+                            // создаем параметр для сообщения
+                            SqliteParameter IdParam = new SqliteParameter("@Id", message.Chat.Id);
+                            command2.Parameters.Add(IdParam);
+
+                            command.ExecuteNonQueryAsync(cancellationToken);
+                            command2.ExecuteNonQueryAsync(cancellationToken);
+                            
+                        }
+
+
+
+                        if (message.Text == "/start")
+                        {
+                            // Тут все аналогично Inline клавиатуре, только меняются классы
+                            // НО! Тут потребуется дополнительно указать один параметр, чтобы
+                            // клавиатура выглядела нормально, а не как абы что
+
+                            var replyKeyboard = new ReplyKeyboardMarkup(
+                                new List<KeyboardButton[]>()
+                                {
                                         new KeyboardButton[]
                                         {
                                             new KeyboardButton("Семен"),
@@ -87,108 +159,122 @@ namespace traning_Tbot
                                             new KeyboardButton("СТАТА"),
                                             new KeyboardButton("test")
                                         }
-                    })
-                {
-                    // автоматическое изменение размера клавиатуры, если не стоит true,
-                    // тогда клавиатура растягивается чуть ли не до луны,
-                    // проверить можете сами
-                    ResizeKeyboard = true,
-                };
-                string date = DateTime.Now.AddDays(1.0).ToString("D");
-                await botClient.SendTextMessageAsync(
-                   message.Chat.Id,
-                   $"Кто повезет парней завтра ({date})?",
-                   replyMarkup: replyKeyboard);
-
-                return;
-            }
-
-
-            if (message.Text == "Семен" || message.Text == "Стас D-класс" || message.Text == "Саня" || message.Text == "Артем")
-            {
-                string name = message.Text;
-                string date = DateTime.Now.AddDays(1.0).ToString("yyyy.MM.dd");
-
-
-
-                using (var connection = new SqliteConnection(SqliteConnectionString))
-                {
-
-                    string sqlExpression = $"SELECT COUNT(*) FROM statistic WHERE date = \"{date}\";";
-
-                    SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());
-                    connection.Open();
-
-                    int count = 0;
-                    SqliteCommand command = new SqliteCommand(sqlExpression, connection);
-                    using (SqliteDataReader reader = command.ExecuteReader())
-                    {
-                        if (reader.HasRows) // если есть данные
-                        {
-                            while (reader.Read())   // построчно считываем данные
+                                })
                             {
-                                count = int.Parse(reader.GetValue(0).ToString());
+                                // автоматическое изменение размера клавиатуры, если не стоит true,
+                                // тогда клавиатура растягивается чуть ли не до луны,
+                                // проверить можете сами
+                                ResizeKeyboard = true,
+                            };
+                            string date = DateTime.Now.AddDays(1.0).ToString("D");
+                            await botClient.SendTextMessageAsync(
+                               message.Chat.Id,
+                               $"Кто повезет парней завтра ({date})?",
+                               replyMarkup: replyKeyboard);
 
-                                Console.WriteLine($"{count}");
+                            return;
+                        }
+
+
+                        if (message.Text == "Семен" || message.Text == "Стас D-класс" || message.Text == "Саня" || message.Text == "Артем")
+                        {
+                            string name = message.Text;
+                            string date = DateTime.Now.AddDays(1.0).ToString("yyyy.MM.dd");
+
+
+
+                            using (var connection = new SqliteConnection(SqliteConnectionString))
+                            {
+
+                                string sqlExpression = $"SELECT COUNT(*) FROM statistic WHERE date = \"{date}\";";
+
+                                SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());
+                                connection.Open();
+
+                                int count = 0;
+                                SqliteCommand command = new SqliteCommand(sqlExpression, connection);
+                                using (SqliteDataReader reader = command.ExecuteReader())
+                                {
+                                    if (reader.HasRows) // если есть данные
+                                    {
+                                        while (reader.Read())   // построчно считываем данные
+                                        {
+                                            count = int.Parse(reader.GetValue(0).ToString());
+
+                                            Console.WriteLine($"{count}");
+                                        }
+                                    }
+                                }
+
+                                if (count == 1)
+                                {
+
+                                    Message sendErrorMessage = await botClient.SendTextMessageAsync(
+                                    chatId: chatId,
+                                    text: $"Кто-то забронил, но мы его ебанули ради тебя дорогой",
+                                    disableNotification: true,
+                                    cancellationToken: cancellationToken);
+
+                                    command = new SqliteCommand();
+                                    command.Connection = connection;
+                                    command.CommandText = $"DELETE FROM statistic WHERE date = \"{date}\"";
+                                    int number2 = command.ExecuteNonQuery();
+                                }
+
+
+                                command = new SqliteCommand();
+                                command.Connection = connection;
+                                command.CommandText = $"INSERT INTO statistic (name, date) VALUES (\"{name}\", \"{date}\")";
+                                var str = $"INSERT INTO Statistic (name, date) VALUES (\"{name}\", \"{date}\")";
+                                //await Console.Out.WriteLineAsync(str);
+                                int number = command.ExecuteNonQuery();
+
+                                date = DateTime.Now.AddDays(1.0).ToString("dd MMMM");
+
+                                Message sendMessage = await botClient.SendTextMessageAsync(
+                                chatId: chatId,
+                                text: $"{date} повезет нормальных пацанов *{name}*",
+                                /*parseMode: ParseMode.MarkdownV2,*/
+                                disableNotification: true,
+                                // replyToMessageId: update.Message.MessageId,
+
+                                cancellationToken: cancellationToken);
+                                return;
                             }
                         }
+                        if (message.Text == "СТАТА")
+                        {
+                            GetStat(message);
+                        }
+                        if (message.Text == "Погода")
+                        {
+                            GetWeather(message);
+                        }
+                        if (message.Text == "test")
+                        {
+                            GetTestKeyboard(message);
+                        }
+                        if (message.Text == "/test2")
+                        {
+                            GetSettings(message, update);
+                        }
+                        break;
                     }
-
-                    if (count == 1)
-                    {
-
-                        Message sendErrorMessage = await botClient.SendTextMessageAsync(
-                        chatId: chatId,
-                        text: $"Кто-то забронил, но мы его ебанули ради тебя дорогой",
-                        disableNotification: true,
-                        cancellationToken: cancellationToken);
-
-                        command = new SqliteCommand();
-                        command.Connection = connection;
-                        command.CommandText = $"DELETE FROM statistic WHERE date = \"{date}\"";
-                        int number2 = command.ExecuteNonQuery();
-                    }
-
-
-                    command = new SqliteCommand();
-                    command.Connection = connection;
-                    command.CommandText = $"INSERT INTO statistic (name, date) VALUES (\"{name}\", \"{date}\")";
-                    var str = $"INSERT INTO Statistic (name, date) VALUES (\"{name}\", \"{date}\")";
-                    //await Console.Out.WriteLineAsync(str);
-                    int number = command.ExecuteNonQuery();
-
-                    date = DateTime.Now.AddDays(1.0).ToString("dd MMMM");
-
-                    Message sendMessage = await botClient.SendTextMessageAsync(
-                    chatId: chatId,
-                    text: $"{date} повезет нормальных пацанов *{name}*",
-                    /*parseMode: ParseMode.MarkdownV2,*/
-                    disableNotification: true,
-                    // replyToMessageId: update.Message.MessageId,
-
-                    cancellationToken: cancellationToken);
-                    return;
-                }
             }
-            if (message.Text == "СТАТА")
-            {
-                GetStat(message);
-            }
-            if (message.Text == "Погода")
-            {
-                GetWeather(message);
-            }
-
-            if (message.Text == "test")
-            {
-                GetTestKeyboard(message);
-            }
-
-
-
         }
 
+        async void GetSettings(Message message, Update? update)
+        {
+            var mess = "update.Id: " + update.Id + "\n";
+            mess += "update.ChatMember: " + update.ChatMember + "\n";
+            mess += "message.From: " + message.From.Id
+                + "\n";
 
+            await botClient.SendTextMessageAsync(
+              message.Chat.Id,
+              mess
+              );
+        }
 
         async void GetTestKeyboard(Message message)
         {
@@ -197,20 +283,15 @@ namespace traning_Tbot
             // first row
             new []
             {
-                InlineKeyboardButton.WithCallbackData(text: "1.1", callbackData: "11"),
-                InlineKeyboardButton.WithCallbackData(text: "1.2", callbackData: "12"),
+                InlineKeyboardButton.WithCallbackData(text: "Я Еду", callbackData: "42"),
+                InlineKeyboardButton.WithCallbackData(text: "Я Везу", callbackData: "43"),
             },
-            // second row
-            new []
-            {
-                InlineKeyboardButton.WithCallbackData(text: "2.1", callbackData: "21"),
-                InlineKeyboardButton.WithCallbackData(text: "2.2", callbackData: "22"),
-            },
+            
             });
-
+            
             Message sentMessage = await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: "A message with an inline keyboard markup",
+                text: "Выбери себя, БРАТ",
                 replyMarkup: inlineKeyboard,
                 cancellationToken: this.cts.Token);
         }
