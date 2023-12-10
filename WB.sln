@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Telegram.Bot.Examples.Polli
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tbot", "Tbot\Tbot.csproj", "{C5F882A2-D953-4F37-B90D-7DCCDEEB733A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "traning_Tbot", "traning_Tbot\traning_Tbot.csproj", "{8119133A-40CC-49CE-82F6-A759EF932F0A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "traning_Tbot", "traning_Tbot\traning_Tbot.csproj", "{8119133A-40CC-49CE-82F6-A759EF932F0A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

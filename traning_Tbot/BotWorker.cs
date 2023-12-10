@@ -62,30 +62,7 @@ namespace traning_Tbot
                         sw.Start();
                         // Измеряемый код
                         
-                        using (var connection = new SqliteConnection(SqliteConnectionString))
-                            {
-                                connection.Open();
-
-                                string sqlExpression = "INSERT INTO Main_stat (Name, NikName, IdUser, Date, CodeDrive, ChatId) VALUES (@Name, @NikName, @IdUser, @Date, @CodeDrive, @ChatId)";
-                                SqliteCommand command = new SqliteCommand(sqlExpression, connection);
-                                // создаем параметр для сообщения
-                                SqliteParameter NameParam = new SqliteParameter("@Name", user.FirstName);
-                                command.Parameters.Add(NameParam);
-                                SqliteParameter NikNameParam = new SqliteParameter("@NikName", user.Username);
-                                command.Parameters.Add(NikNameParam);
-                                SqliteParameter id_userParam = new SqliteParameter("@IdUser", message.From.Id);
-                                command.Parameters.Add(id_userParam);
-                                SqliteParameter dateParam = new SqliteParameter("@Date", message.Message.Date.ToString("g"));
-                                command.Parameters.Add(dateParam);
-                                SqliteParameter CodeDriveParam = new SqliteParameter("@CodeDrive", message.Data);
-                                command.Parameters.Add(CodeDriveParam);
-                                SqliteParameter ChatIdParam = new SqliteParameter("@ChatId", message.Message.Chat.Id);
-                                command.Parameters.Add(ChatIdParam);
-                            
-
-                            int number = await command.ExecuteNonQueryAsync();
-
-                            }
+                        
                         Console.WriteLine("ЗАписано");
                         sw.Stop();
                         Console.WriteLine(sw.Elapsed);
