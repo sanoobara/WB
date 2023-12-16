@@ -5,22 +5,74 @@ using traning_Tbot;
 config config = new config();
 
 
-
-Console.WriteLine(config.Configuration["Token"], config.Configuration["DataBase"]);
-
-
 using CancellationTokenSource cts = new();
 
 var botWorker = new BotWorker(config.Configuration["Token"], config.Configuration["DataBase"], cts);
 
 var me = await botWorker.botClient.GetMeAsync();
 Console.WriteLine($"Start listening for @{me.Username}");
+
+
+
+
+
+botWorker.PushMessage();
+
 Console.ReadLine();
 cts.Cancel();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //var s = ExchangeRate.GetRate();
 
 //Console.WriteLine(s.Result);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async Task Timers()
 {

@@ -74,7 +74,7 @@ class Program
         // Обязательно ставим блок try-catch, чтобы наш бот не "падал" в случае каких-либо ошибок
         try
         {
-            
+
             // Сразу же ставим конструкцию switch, чтобы обрабатывать приходящие Update
             switch (update.Type)
             {
@@ -122,26 +122,11 @@ class Program
                                 chat.Id, "EMPTY");
                                 }
 
-
-
-
-
-
                             }
 
                             Thread.Sleep(100000);
 
-
-
-
                         }
-
-
-
-
-
-
-
                         return;
                     }
             }
